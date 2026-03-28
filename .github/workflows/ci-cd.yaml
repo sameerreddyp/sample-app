@@ -2,9 +2,9 @@ name: CI/CD per Service (api & web to Docker Hub)
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "master" ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ "master" ]
 
 jobs:
   changes:
