@@ -1,0 +1,111 @@
+name: CI/CD per Service (api & web to Docker Hub)
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      api: ${{ steps.filter.outputs.api }}
+      web: ${{ steps.filter.outputs.web }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Detect changed paths
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            api:
+              - 'api/**'
+            web:
+              - 'web/**'
+
+# ---------------- API ---------------- #
+
+  build-api:
+    name: Build & Push API
+    needs: changes
+    if: needs.changes.outputs.api == 'true'
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+
+      - name: Build & Push API Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./api
+          file: ./api/Dockerfile
+          push: true
+          tags: sameerreddyp/sample-app-api:${{ github.sha }}
+
+  deploy-api:
+    name: Deploy API (Stub)
+    needs: build-api
+    if: needs.changes.outputs.api == 'true' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy API
+        run: |
+          echo "🚀 Deploying API..."
+          echo "Image: sameerreddyp/sample-app-api:${{ github.sha }}"
+
+# ---------------- WEB ---------------- #
+
+  build-web:
+    name: Build & Push Web
+    needs: changes
+    if: needs.changes.outputs.web == 'true'
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+
+      - name: Build & Push Web Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./web
+          file: ./web/Dockerfile
+          push: true
+          tags: sameerreddyp/sample-app-web:${{ github.sha }}
+
+  deploy-web:
+    name: Deploy Web (Stub)
+    needs: build-web
+    if: needs.changes.outputs.web == 'true' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy Web
+        run: |
+          echo "🚀 Deploying Web..."
+          echo "Image: sameerreddyp/sample-app-web:${{ github.sha }}"
