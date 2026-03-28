@@ -1,17 +1,20 @@
-FROM node:6.5
+# Use the official Node.js image as a base image
+FROM node:14
 
-COPY ./bin /app/bin
-COPY ./app.js /app/
-COPY ./package.json /app/
+# Set the working directory inside the container
 WORKDIR /app
+
+# Copy package.json and package-lock.json to the working directory
+COPY package*.json ./
+
+# Install dependencies
 RUN npm install
 
-EXPOSE 8080
-ENV PORT=8080
-ENV DB=postgres://api_user:apipassword@localhost/node-3tier-api
+# Copy the rest of the application code to the working directory
+COPY . .
 
-HEALTHCHECK --interval=10s --timeout=3s \
-    CMD curl -f -s http://localhost:8080/api/status
+# Expose the port that your app is running on
+EXPOSE 3500
 
-ENTRYPOINT ["npm", "start"]
-
+# Command to run your application
+CMD ["node", "server.js"]
